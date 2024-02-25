@@ -307,7 +307,7 @@ void OnPluginStop()
 
 const char *GetPluginAuthor()
 {
-    return "blu1337";
+    return "Swiftly Solutions";
 }
 
 const char *GetPluginVersion()
@@ -322,5 +322,5 @@ const char *GetPluginName()
 
 const char *GetPluginWebsite()
 {
-    return "1tap.ro";
+    return "https://github.com/swiftly-solution/swiftly_skins";
 }
