@@ -192,11 +192,34 @@ void Command_Ranks(int playerID, const char **args, uint32_t argsCount, bool sil
     }
 }
 
+void Command_Top(int playerID, const char **args, uint32_t argsCount, bool silent)
+{
+    if (!db->IsConnected())
+        return;
+
+    Player *player = g_playerManager->GetPlayer(playerID);
+    if (player == nullptr)
+        return;
+
+    char query[256];
+    sprintf(query, "SELECT name, points FROM %s ORDER BY points DESC LIMIT 10", "ranks");
+    DB_Result result = db->Query(query);
+
+
+    for (int i = 0; i < result.size(); i++) {
+        const char* name = db->fetchValue<const char*>(result, i, "name");
+        int points = db->fetchValue<int>(result, i, "points");
+
+        player->SendMsg(HUD_PRINTTALK, "{DEFAULT}%d. {LIGHTBLUE}%s - {LIME}Experience: {LIGHTBLUE}%d.", i+1, name, points);
+    }
+
+}
 
 
 void OnPluginStart()
 {
         commands->Register("rank", reinterpret_cast<void *>(&Command_Ranks));
+        commands->Register("top", reinterpret_cast<void *>(&Command_Top));
 
         db = new Database("swiftly_ranks");
 
