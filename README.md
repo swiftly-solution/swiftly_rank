@@ -58,6 +58,10 @@
 4. Push to the Branch
 5. Open a Pull Request
 
+### DONT USE THIS BRANCH
+
+* You shouldn't use this branch, this branch contains shit and unoptimized code. This is being used only for some tests.
+
 ### Have ideas/Found bugs? 💡
 Join [Swiftly Discord Server](https://swiftlycs2.net/discord) and send a message in the topic from `📕╎plugins-sharing` of this plugin!
 
