@@ -32,7 +32,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                   repository: swiftly-solution/swiftly
-                  ref: master
+                  ref: cd713350d4987aa081650fe6d067ed790b24fd77
                   path: swiftly
 
             - name: Installing Swiftly Scripting files
