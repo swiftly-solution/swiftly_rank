@@ -33,12 +33,12 @@ void OnPlayerSpawn(Player *player)
         return;
 
     if (player->IsFirstSpawn() && !player->IsFakeClient())
-        db->Query("insert ignore into `ranks` (steamid, name) values ('%llu', '%s')", player->GetSteamID(), player->GetName());
+        db->Query("insert ignore into `ranks` (steamid, name) values ('%llu', '%s')", player->GetSteamID2(), player->GetName());
 
     bool ScoreboardRanks = config->Fetch<bool>("swiftly_ranks.EnableScoreboardRanks");
 
     if (ScoreboardRanks == true) {
-        DB_Result result = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+        DB_Result result = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         int PointsCommand = 0;
         if(result.size() > 0) {
             PointsCommand = db->fetchValue<int>(result, 0, "points");
@@ -118,7 +118,7 @@ void Command_Ranks(int playerID, const char **args, uint32_t argsCount, bool sil
         if (player == nullptr)
         return;
 
-    DB_Result result = db->Query("SELECT points, kills, deaths, assists FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+    DB_Result result = db->Query("SELECT points, kills, deaths, assists FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
     int PointsCommand = 0, KillsCommand = 0, DeathsCommand = 0, AssistsCommand = 0;
     if(result.size() > 0) {
         PointsCommand = db->fetchValue<int>(result, 0, "points");
@@ -234,7 +234,7 @@ void OnPluginStart()
 
 void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assistedflash, const char *weapon, bool headshot, short dominated, short revenge, short wipe, short penetrated, bool noreplay, bool noscope, bool thrusmoke, bool attackerblind, float distance, short dmg_health, short dmg_armor, short hitgroup)
 {
-    DB_Result resultPlayer = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+    DB_Result resultPlayer = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
     DB_Result resultAttacker;
     int currentPointsPlayer = 0;
     int currentPointsAttacker = 0;
@@ -243,7 +243,7 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
     }
 
     if(attacker) {
-        resultAttacker = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID());
+        resultAttacker = db->Query("SELECT points FROM %s WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID2());
         if(resultAttacker.size() > 0) {
             currentPointsAttacker = db->fetchValue<int>(resultAttacker, 0, "points");
         }
@@ -255,48 +255,48 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
     if(player == attacker) {
         if(currentPointsPlayer > 0) {
              attacker->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[- %d for suicide]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsPlayer - config->Fetch<int>("swiftly_ranks.Suicide"), config->Fetch<int>("swiftly_ranks.Suicide"));
-            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Suicide"), player->GetSteamID());
-            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Suicide"), player->GetSteamID2());
+            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         }
     }
     else if(headshot && attacker) {
         attacker->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[+ %d for headshot]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsAttacker + config->Fetch<int>("swiftly_ranks.HeadShotKill"), config->Fetch<int>("swiftly_ranks.HeadShotKill"));
-        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.HeadShotKill"), attacker->GetSteamID());
-        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID());
+        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.HeadShotKill"), attacker->GetSteamID2());
+        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID2());
         if(currentPointsPlayer > 0) {
             player->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[- %d for dying]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsPlayer - config->Fetch<int>("swiftly_ranks.Suicide"), config->Fetch<int>("swiftly_ranks.Death"));
-            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID());
-            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID2());
+            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         }
     }
     else if(noscope && attacker) {
         attacker->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[+ %d for noscope]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsAttacker + config->Fetch<int>("swiftly_ranks.NoScopeKill"), config->Fetch<int>("swiftly_ranks.NoScopeKill"));
-        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NoScopeKill"), attacker->GetSteamID());
-        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID());
+        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NoScopeKill"), attacker->GetSteamID2());
+        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID2());
         if(currentPointsPlayer > 0) {
             player->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[- %d for dying]\n", currentPointsPlayer - config->Fetch<int>("swiftly_ranks.Death"), config->Fetch<int>("swiftly_ranks.Death"));
-            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID());
-            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID2());
+            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         }
     }
     else if(attacker) {
         attacker->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[+ %d for kill]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsAttacker + config->Fetch<int>("swiftly_ranks.NormalKill"), config->Fetch<int>("swiftly_ranks.NormalKill"));
-        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NormalKill"), attacker->GetSteamID());
-        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID());
+        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NormalKill"), attacker->GetSteamID2());
+        db->Query("UPDATE %s SET kills = kills + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", attacker->GetSteamID2());
         if(currentPointsPlayer > 0) {
             player->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[- %d for dying]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsPlayer - config->Fetch<int>("swiftly_ranks.Death"), config->Fetch<int>("swiftly_ranks.Death"));
-            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID());
-            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID2());
+            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         }
     }
     else if(assister) {
         assister->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[+ %d for assist]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsAttacker + config->Fetch<int>("swiftly_ranks.AssistKill"), config->Fetch<int>("swiftly_ranks.AssistKill"));
-        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NormalKill"), assister->GetSteamID());
-        db->Query("UPDATE %s SET assists = assists + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", assister->GetSteamID());
+        db->Query("UPDATE %s SET points = points + %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.NormalKill"), assister->GetSteamID2());
+        db->Query("UPDATE %s SET assists = assists + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", assister->GetSteamID2());
         if(currentPointsPlayer > 0) {
             player->SendMsg(HUD_PRINTTALK, "{RED} %s {DEFAULT}Your exp: %d {RED}[- %d for dying]\n", FetchTranslation("swiftly_ranks.prefix"), currentPointsPlayer - config->Fetch<int>("swiftly_ranks.Death"), config->Fetch<int>("swiftly_ranks.Death"));
-            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID());
-            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
+            db->Query("UPDATE %s SET points = points - %d WHERE steamid = '%llu' LIMIT 1", "ranks", config->Fetch<int>("swiftly_ranks.Death"), player->GetSteamID2());
+            db->Query("UPDATE %s SET deaths = deaths + 1 WHERE steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID2());
         }
     }
 }
