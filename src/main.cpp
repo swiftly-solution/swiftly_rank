@@ -111,7 +111,7 @@ void OnMapLoad(const char* mapName)
     server->SetQueuedMatchmaking(true);
 }
 
-void OnPlayerPrePostThink(Player* player)
+bool OnPlayerPrePostThink(Player* player)
 {
     return true;
 }
