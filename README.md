@@ -25,30 +25,30 @@
 1. Download the newest [release](https://github.com/swiftly-solution/swiftly_rank/releases).
 2. Everything is drag & drop, so i think you can do it!
 3. Setup database connection in `addons/swiftly/configs/databases.json` with the key `swiftly_ranks` like in the following example:
+
 ```json
 {
-    "swiftly_ranks": {
-        "host": "...",
-        "username": "...",
-        "password": "...",
-        "database": "...",
-        "port": 3306
-    }
+  "swiftly_ranks": {
+    "host": "...",
+    "username": "...",
+    "password": "...",
+    "database": "...",
+    "port": 3306
+  }
 }
 ```
+
 (!) Don't forget to replace the `...` with the actual values !!
 
 ### Configuring the plugin 🧐
 
-* After installing the plugin, you should change the default prefix from ``addons/swiftly/translations/translation.swiftly_ranks.json`` (optional)
-* To change the value of the points, edit ``addons/swiftly/configs/plugins/swiftly_ranks.json``
-* If you want to enable Clan Tags with the ranks in scoreboard, you will need to edit the config placed in: ``addons/swiftly/configs/plugins/swiftly_ranks.json``
+- After installing the plugin, you should change the default prefix from `addons/swiftly/translations/translation.swiftly_ranks.json` (optional)
+- To change the value of the points, edit `addons/swiftly/configs/plugins/swiftly_ranks.json`
 
 ### TODO 🛡️
 
-* Top Command.
-* Rank Icons in Scoreboard.
-* Chat Alert when reaching a new rank.
+- Rank Icons in Scoreboard. (will make an module for this)
+- Chat Alert when reaching a new rank.
 
 ### Creating A Pull Request 😃
 
@@ -59,6 +59,7 @@
 5. Open a Pull Request
 
 ### Have ideas/Found bugs? 💡
+
 Join [Swiftly Discord Server](https://swiftlycs2.net/discord) and send a message in the topic from `📕╎plugins-sharing` of this plugin!
 
 ---
