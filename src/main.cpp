@@ -33,24 +33,35 @@ void UpdatePlayer(Player *player, int type, int value)
     // TYPE 1 = POINTS
     // TYPE 2 = KILLS
     // TYPE 3 = DEATHS
+    // TYPE 4 = ASSISTS
 
-    if (!db->IsConnected() || type < 1 || type > 3)
+    if (!db->IsConnected())
         return;
 
-    if (type == 1)
+    switch (type)
+    {
+    case 1:
     {
         db->Query("UPDATE %s SET points = %d WHERE steamid = '%llu'", "ranks", value, player->GetSteamID());
         player->vars->Set("points", value);
     }
-    else if (type == 2)
+    case 2:
     {
         db->Query("UPDATE %s SET kills = %d WHERE steamid = '%llu'", "ranks", value, player->GetSteamID());
         player->vars->Set("kills", value);
     }
-    else if (type == 3)
+    case 3:
     {
         db->Query("UPDATE %s SET deaths = %d WHERE steamid = '%llu'", "ranks", value, player->GetSteamID());
         player->vars->Set("deaths", value);
+    }
+    case 4:
+    {
+        db->Query("UPDATE %s SET assists = %d WHERE steamid = '%llu'", "ranks", value, player->GetSteamID());
+        player->vars->Set("assists", value);
+    }
+    default:
+        break;
     }
 }
 
@@ -83,16 +94,19 @@ void OnClientFullConnected(Player *player)
         int points = 0;
         int kills = 0;
         int deaths = 0;
+        int assists = 0;
         DB_Result result = db->Query("SELECT * FROM %s where steamid = '%llu' LIMIT 1", "ranks", player->GetSteamID());
         if (result.size() > 0)
         {
             points = db->fetchValue<int>(result, 0, "points");
             kills = db->fetchValue<int>(result, 0, "kills");
             deaths = db->fetchValue<int>(result, 0, "deaths");
+            assists = db->fetchValue<int>(result, 0, "assists");
         }
         player->vars->Set("points", points);
         player->vars->Set("kills", kills);
         player->vars->Set("deaths", deaths);
+        player->vars->Set("assists", assists);
     }
 }
 
@@ -110,9 +124,10 @@ void Command_Top(int playerID, const char **args, uint32_t argsCount, bool silen
         return;
 
     DB_Result result = db->Query("SELECT name, points FROM %s ORDER BY points DESC LIMIT 10", "ranks");
-    if (result.size() > 10)
+    int size = 0;
+    if (size > 0)
     {
-        for (int i = 0; i < result.size(); i++)
+        for (int i = 0; i < size; i++)
         {
             const char *name = db->fetchValue<const char *>(result, i, "name");
             int points = db->fetchValue<int>(result, i, "points");
@@ -142,7 +157,8 @@ void Command_Rank(int playerID, const char **args, uint32_t argsCount, bool sile
     int points = FetchPlayer(player, "points");
     int kills = FetchPlayer(player, "kills");
     int deaths = FetchPlayer(player, "deaths");
-    float kd = static_cast<float>(kills) / static_cast<float>(deaths);
+    int assists = FetchPlayer(player, "assists");
+    float kda = static_cast<float>(kills + assists) / static_cast<float>(deaths);
 
     std::string rank = "Unranked";
 
@@ -177,7 +193,7 @@ void Command_Rank(int playerID, const char **args, uint32_t argsCount, bool sile
     sprintf(buffer, "%s %s.", prefix, FetchTranslation("swiftly_ranks.DisplayStats"));
     player->SendMsg(HUD_PRINTTALK, buffer, kills, deaths);
     sprintf(buffer, "%s %s.", prefix, FetchTranslation("swiftly_ranks.DisplayKD"));
-    player->SendMsg(HUD_PRINTTALK, buffer, kd);
+    player->SendMsg(HUD_PRINTTALK, buffer, kda);
     player->SendMsg(HUD_PRINTTALK, "%s -------------------------------------------------------------------", prefix);
 }
 
@@ -187,11 +203,13 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
     int headshotkill = config->Fetch<int>("swiftly_ranks.Points.HeadshotPoints");
     int noscopekill = config->Fetch<int>("swiftly_ranks.Points.NoscopeKill");
     int death = config->Fetch<int>("swiftly_ranks.Points.DeathPoints");
+    int assist = config->Fetch<int>("swiftly_Ranks.Points.AssistPoints");
 
     int attackerpoints = FetchPlayer(attacker, "points");
     int attackerkills = FetchPlayer(attacker, "kills");
     int playerpoints = FetchPlayer(player, "points");
     int playerdeaths = FetchPlayer(player, "deaths");
+    int playerassists = FetchPlayer(player, "assists");
 
     if (attacker == nullptr || player == nullptr)
         return;
@@ -246,6 +264,15 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
             UpdatePlayer(player, 1, attackerpoints - death);
             UpdatePlayer(player, 2, playerdeaths + 1);
         }
+    }
+
+    if (assister)
+    {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "%s %s.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.AssistKill"));
+        assister->SendMsg(HUD_PRINTTALK, buffer, assist);
+        UpdatePlayer(assister, 1, attackerpoints + assist);
+        UpdatePlayer(assister, 4, playerassists + 1);
     }
 }
 
