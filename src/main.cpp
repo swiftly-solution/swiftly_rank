@@ -283,7 +283,7 @@ void OnPluginStart()
 
     db = new Database("swiftly_ranks");
 
-    DB_Result result = db->Query("CREATE TABLE IF NOT EXISTS `ranks` (`steamid` varchar(1297) NOT NULL, `name` varchar(128) NOT NULL, `points` int(11) NOT NULL, `kills` int(11) NOT NULL, `deaths` int(11) NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;");
+    DB_Result result = db->Query("CREATE TABLE IF NOT EXISTS `ranks` (`steamid` varchar(1297) NOT NULL, `name` varchar(128) NOT NULL, `points` int(11) NOT NULL, `kills` int(11) NOT NULL, `deaths` int(11) NOT NULL, `assists` int(11) NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;");
     if (result.size() > 0)
     {
         db->Query("ALTER TABLE `ranks` ADD UNIQUE KEY `steamid` (`steamid`);");
