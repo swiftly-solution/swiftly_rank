@@ -300,6 +300,7 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
     int attackerkills = 0;
     int playerpoints = 0;
     int playerdeaths = 0;
+    int assisterpoints = 0;
 
     if (attacker == nullptr || player == nullptr)
         return;
@@ -316,6 +317,11 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
         playerdeaths = FetchPlayer(player, "deaths");
     }
 
+    if (assister)
+    {
+        assisterpoints = FetchPlayer(assister, "points");
+    }
+
     if (attacker == player)
         return;
 
@@ -330,8 +336,8 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
         {
             char buffer[256];
             snprintf(buffer, sizeof(buffer), "%s %s.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.Death"));
-            player->SendMsg(HUD_PRINTTALK, buffer, death);
-            UpdatePlayer(player, 1, attackerpoints - death);
+            player->SendMsg(HUD_PRINTTALK, buffer, playerpoints - death, death);
+            UpdatePlayer(player, 1, playerpoints - death);
             UpdatePlayer(player, 3, playerdeaths + 1);
         }
     }
@@ -346,8 +352,8 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
         {
             char buffer[256];
             snprintf(buffer, sizeof(buffer), "%s %s.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.Death"));
-            player->SendMsg(HUD_PRINTTALK, buffer, death);
-            UpdatePlayer(player, 1, attackerpoints - death);
+            player->SendMsg(HUD_PRINTTALK, buffer, playerpoints - death, death);
+            UpdatePlayer(player, 1, playerpoints - death);
             UpdatePlayer(player, 3, playerdeaths + 1);
         }
     }
@@ -362,8 +368,8 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
         {
             char buffer[256];
             snprintf(buffer, sizeof(buffer), "%s %s.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.Death"));
-            player->SendMsg(HUD_PRINTTALK, buffer, death);
-            UpdatePlayer(player, 1, attackerpoints - death);
+            player->SendMsg(HUD_PRINTTALK, buffer, playerpoints - death, death);
+            UpdatePlayer(player, 1, playerpoints - death);
             UpdatePlayer(player, 3, playerdeaths + 1);
         }
     }
@@ -373,7 +379,7 @@ void OnPlayerDeath(Player *player, Player *attacker, Player *assister, bool assi
         char buffer[256];
         snprintf(buffer, sizeof(buffer), "%s %s.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.AssistKill"));
         assister->SendMsg(HUD_PRINTTALK, buffer, assist);
-        UpdatePlayer(assister, 1, attackerpoints + assist);
+        UpdatePlayer(assister, 1, assisterpoints + assist);
         UpdatePlayer(assister, 4, playerassists + 1);
     }
 }
