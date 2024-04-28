@@ -6,6 +6,7 @@
 #include <swiftly/logger.h>
 #include <swiftly/timers.h>
 #include <swiftly/gameevents.h>
+#include <swiftly/exports.h>
 
 Server *server = nullptr;
 PlayerManager *g_playerManager = nullptr;
@@ -14,6 +15,7 @@ Commands *commands = nullptr;
 Configuration *config = nullptr;
 Logger *logger = nullptr;
 Timers *timers = nullptr;
+Exports *exports = nullptr;
 
 void OnProgramLoad(const char *pluginName, const char *mainFilePath)
 {
@@ -25,6 +27,7 @@ void OnProgramLoad(const char *pluginName, const char *mainFilePath)
     config = new Configuration();
     logger = new Logger(mainFilePath, pluginName);
     timers = new Timers();
+    exports = new Exports(pluginName);
 }
 
 void UpdatePlayer(Player *player, int type, int value)
@@ -119,7 +122,7 @@ void Command_Top(int playerID, const char **args, uint32_t argsCount, bool silen
         return;
 
     DB_Result result = db->Query("SELECT name, points FROM %s ORDER BY points DESC LIMIT 10", "ranks");
-    int size = 0;
+    int size = result.size();
     if (size > 0)
     {
         for (int i = 0; i < size; i++)
@@ -130,9 +133,100 @@ void Command_Top(int playerID, const char **args, uint32_t argsCount, bool silen
             player->SendMsg(HUD_PRINTTALK, "{DEFAULT}%d. {LIGHTBLUE}%s - {LIME}Experience: {LIGHTBLUE}%d.", i + 1, name, points);
         }
     }
-    else
+}
+
+void Command_GivePoints(int playerID, const char **args, uint32_t argsCount, bool silent)
+{
+    if (playerID == -1)
+        return;
+
+    if (!db->IsConnected())
+        return;
+
+    Player *player = g_playerManager->GetPlayer(playerID);
+
+    if (player == nullptr)
+        return;
+
+    int access = exports->Call<bool>("swiftly_admins", "HasFlags", player->GetSlot(), config->Fetch<const char *>("swiftly_ranks.Admin.Flag"));
+    if (access == 0)
     {
-        player->SendMsg(HUD_PRINTTALK, "%s Not enough players!", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"));
+        char buffer[256];
+        sprintf(buffer, "%s %s", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.NoAccess"));
+        player->SendMsg(HUD_PRINTTALK, buffer);
+        return;
+    }
+
+    if (argsCount < 2)
+    {
+        player->SendMsg(HUD_PRINTTALK, "%s Usage: !givepoints player points", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"));
+        return;
+    }
+
+    auto target = GetPlayerId(args[0]);
+    int points = atoi(args[1]);
+
+    if (points <= 0)
+    {
+        player->SendMsg(HUD_PRINTTALK, "%s Points must be greater than zero.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"));
+        return;
+    }
+
+    Player *targetplayer = g_playerManager->GetPlayer(target);
+    int TargetPoints = FetchPlayer(targetplayer, "points");
+
+    UpdatePlayer(targetplayer, 1, TargetPoints + points);
+    targetplayer->SendMsg(HUD_PRINTTALK, "%s You have received %d credits from: %s", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), points, player->GetName());
+    player->SendMsg(HUD_PRINTTALK, "%s You gave %d points to: %s", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), points, targetplayer->GetName());
+    return;
+}
+
+void Command_GivePointsToAll(int playerID, const char **args, uint32_t argsCount, bool silent)
+{
+    if (playerID == -1)
+        return;
+
+    if (!db->IsConnected())
+        return;
+
+    Player *player = g_playerManager->GetPlayer(playerID);
+
+    if (player == nullptr)
+        return;
+
+    int access = exports->Call<bool>("swiftly_admins", "HasFlags", player->GetSlot(), config->Fetch<const char *>("swiftly_ranks.Admin.Flag"));
+    if (access == 0)
+    {
+        char buffer[256];
+        sprintf(buffer, "%s %s", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), FetchTranslation("swiftly_ranks.NoAccess"));
+        player->SendMsg(HUD_PRINTTALK, buffer);
+        return;
+    }
+
+    if (argsCount < 1)
+    {
+        player->SendMsg(HUD_PRINTTALK, "%s Usage: !givepointstoall points", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"));
+        return;
+    }
+
+    int points = atoi(args[0]);
+
+    if (points <= 0)
+    {
+        player->SendMsg(HUD_PRINTTALK, "%s Points must be greater than zero.", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"));
+        return;
+    }
+
+    for (int i = 0; i < g_playerManager->GetPlayerCap(); i++)
+    {
+        Player *AllPlayers = g_playerManager->GetPlayer(i);
+        if (!AllPlayers)
+            continue;
+
+        int pPoints = FetchPlayer(AllPlayers, "points");
+        UpdatePlayer(AllPlayers, 1, points + pPoints);
+        g_playerManager->SendMsg(HUD_PRINTTALK, "%s You have received %d credits", config->Fetch<const char *>("swiftly_ranks.Settings.Prefix"), points);
+        return;
     }
 }
 
@@ -288,6 +382,10 @@ void OnPluginStart()
 {
     commands->Register("rank", reinterpret_cast<void *>(&Command_Rank));
     commands->Register("top", reinterpret_cast<void *>(&Command_Top));
+
+    // ADMIN COMMANDS
+    commands->Register("givepoints", reinterpret_cast<void *>(&Command_GivePoints));
+    commands->Register("givepointstoall", reinterpret_cast<void *>(&Command_GivePointsToAll));
 
     db = new Database("swiftly_ranks");
 
